@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Scanner;
 
@@ -9,13 +10,13 @@ public class WorkRanker2 {
 	static String word; // word input
 	static char[] letters; // character array of char that make up the inputed word
 	static char[] lettersSorted;// an alphabetically sorted version of "letters"
-	static int rank = 1; // counter for the rank of a word
+	static long rank = 1; // counter for the rank of a word
 
 	public static void main(String[] args) {
-
-		//word = args[0];   // take in command line argument
 		
-		
+		// take in command line argument
+		//word = args[0];   
+				
 		Scanner sc = new Scanner(System.in); 
 		  
         // String input 
@@ -27,35 +28,53 @@ public class WorkRanker2 {
 		lettersSorted = word.toCharArray();
 		Arrays.sort(lettersSorted);
 		
-		int index = 0;
-		int next = 1;
+		//Calculates the rank of each letter in the word. Example in word 'abcb' 'b' would be ranked 2
+		HashMap<Character, Integer> letterRank = new HashMap<Character, Integer>();
+		int characterRank = 1;
+		for(int i = 0; i < lettersSorted.length ; i++){			
+			if(letterRank.containsKey(lettersSorted[i])){
+				continue;
+			}
+			else{
+				letterRank.put(lettersSorted[i],characterRank);
+				characterRank++;
+			}
+		}
 		
-		while(!letters.equals(lettersSorted)){
+		double answerHelper[] = new double[letters.length]; // Stores calculations that will be used to compute final word rank
+		
+		
+		for(int i = 0; i < letters.length; i++){
+			double num = 0;
+			double dem = 1;
 			
-			//test print
-			//for(char c : lettersSorted){System.out.print(c);}System.out.println();
-			//System.out.println(rank);
-			
-			if(index>=lettersSorted.length){break;}
-
-			if(lettersSorted[index]==letters[index]){//charcters match no permutations ruled out
-				index++;
-				next = index + 1;
-			}
-			else
-			{
-				
-				String temp = new String(lettersSorted);
-				char[] permIn = temp.substring(index+1, lettersSorted.length).toCharArray();
-				rank += numOfPermutations(permIn); //add number of ruled out permutaions to the rank counter	
-				
-				//Swap indexes making sure equal chars are not swapped
-				swapLettersSorted(index,next);
-
-				next++;
-	
+			//Calculates numerator which is then number of letters that have a higher rank of the current letter to the right of that letter in the word
+			int currLetterRank = letterRank.get(letters[i]);
+			for(int j = i+1; j < letters.length; j++){
+				if(currLetterRank > letterRank.get(letters[j])){
+					num++;
+				}
 			}
 			
+			//Calculate denominator which is the letter counts Factorial of the sub word at and including the current index
+			String subWord = word.substring(i);
+			Map<Character, Integer> wordCharCount = new HashMap<>();
+			for(char c : subWord.toCharArray()){
+				wordCharCount.put(c, wordCharCount.getOrDefault(c, 0)+1);
+			}
+			for (Map.Entry<Character, Integer> entry : wordCharCount.entrySet()) {
+				dem*=factorial(entry.getValue());
+			}
+			
+			answerHelper[i] = num/dem;
+			
+		}
+		
+		//Calculates the final rank of the word using permutation formula by multiplying letters smaller than x index / letter counts Factorial of the sub word at and including the current index * the factorial of word length - index+1
+		// and adding the results for each index x
+		for(int x = 0; x < word.length(); x++){
+			//System.out.println(answerHelper[x] * factorial(word.length()-(x+1)));
+			rank+= answerHelper[x] * factorial(word.length()-(x+1));
 		}
 		
 		//prints output answer
@@ -66,66 +85,12 @@ public class WorkRanker2 {
 	
 	
 	//method for factorial of a number
- 	static int factorial(int input){
- 		if(input == 1){
+ 	static long factorial(int input){
+ 		if((input == 1) || (input == 0)){
  			return 1;
  		}else{
  			return input * factorial(input-1);
  		}
  	}//end factorial
- 	
- 	//method for calculating the count of each character in a Character array
- 	static ArrayList charCount(char Word[]){
- 		 ArrayList<Integer> ret = new ArrayList<Integer>(Word.length);
- 		HashMap<Character, Integer> characterCount = new HashMap<Character, Integer>();
- 		
- 		for(int i = 0 ; i < Word.length ; i++){
- 			
- 			if(characterCount.containsKey(Word[i])){
- 				characterCount.put(Word[i],characterCount.get(Word[i])+1);
- 			}
- 			else
- 			{
- 				characterCount.put(Word[i], 1);
- 			}
- 		}
- 		for(Entry<Character, Integer> entry : characterCount.entrySet()){
- 			ret.add(entry.getValue());
- 		}
- 		
- 		return ret;
- 		
- 	}//end charCount
- 	
- 	//Calculates the number of permutations of a word
- 	static int numOfPermutations(char Word[]){
- 		int numerator = factorial(Word.length);
- 		
- 		int denominator = 1;
- 		
- 		ArrayList<Integer> charCounts = charCount(Word);
- 		
- 		for(Integer i : charCounts){
- 			denominator *= factorial(i);
- 		}
- 		
- 		return numerator/denominator;
- 		
- 	}//end numOfPermutations
- 	
- 	//Swaps the the 2 indexes of lettersSoreted char array making sure equal chars are not swapped
- 	static void swapLettersSorted(int index, int index2){
- 		
- 		while(lettersSorted[index]==lettersSorted[index2]){
- 			if(index2 >= lettersSorted.length){break;}
- 			index2++;		
- 		}
- 		
- 		char temp  = lettersSorted[index];
- 		lettersSorted[index] = lettersSorted[index2];
- 		lettersSorted[index2] = temp;
- 		
- 	}//end calculatedSwap
- 	
  	
  }//end Class
